@@ -13,23 +13,69 @@ def periodogram(NU, DATA, FF0=[gamma, l, q], covariates=None, NSIM=1):
     and indefinite series of additional covariates.
 
     :param array NU: frequencies [1/d] at which periodogram will be computed.
-    :param dict DATA: data dictionary; must contain at least ('jdb', 'vrad',
-    'svrad')
+
+    :param list DATA: list containing data dictionaries; each element 
+    of list corresponds to a given instrument, and a separate offset
+    will be used in the model. Each dictionary must contain at least ('jdb',
+    'vrad', 'svrad')
+
     :param list FF0: list of base function.
-    :param list covariates: list of covariates to include in linear model.
-    Each one must be an array with same length as DATA['jdb'].
+
+    :param list covariates: list of covariate arrays with covariats to 
+    include in linear model. Each element of the list corresponds to a
+    different instrument, and must be an array of dimensions (Ncov, Npoints),
+    where Ncov is the number of covariates and Npoints is the number of 
+    observations for this instrument, and must be equal to DATA[inst]['jdb']
+    
     :param int NSIM: number of bootstrap permutations performed to estimate
     power significance.
     """
+    
+    if covariates is not None:
+        ## Check if covariates are given in correct format.
+    
+        # Get number of covariates for each instrument.
+        NCOVARIATES = [len(CC) for CC in covariates]
+        assert NCOVARIATES.count(NCOVARIATES[0]) == len(NCOVARIATES), \
+        ("Not all instruments have same number of covariates. This is not "
+         "implemented yet. Sorry.")
+    
+    # Create global arrays with time, velocities and error
+    x = np.concatenate([DATA[DD]['jdb'] for DD in DATA], axis=0)
+    y = np.concatenate([DATA[DD]['vrad'] for DD in DATA], axis=0)
+    ey = np.concatenate([DATA[DD]['svrad'] for DD in DATA], axis=0)
 
-    FVALUES = [f(DATA['jdb']) for f in FF0]
+    if gamma in FF0:
+        # Create matrix with function values
+        
+        # For offset, use 0 and 1, depending on the instrument.
+        FVALUES = [np.isin(x, DATA[DD]['jdb']).astype(int) for DD in DATA]
 
-    # Add a function for each covariate
-    for x in covariates:
-        FVALUES.append(x)
+        # For the others, use x array
+        FVALUES.extend([f(x) for f in FF0 if f != gamma])
 
+    else:
+        # IF offset is not fit
+        FVALUES = [f(x) for f in FF0 if f != gamma]
+
+        
+    if covariates is not None:
+        # Add a function for each covariate
+        for i, DD in enumerate(DATA):  
+            # Check if dimensions match.
+            assert len(DATA[DD]['jdb']) == covariates[i].shape[1], \
+            ('Covariates shape does not match number of points for '
+             '{}'.format(DD))
+  
+        # Add a fuction for each covariate
+        for i in range(covariates[0].shape[0]):
+            FVALUES.append(np.concatenate([CC[i] for CC in covariates]))
+
+    # Build array dictionary with concatenated arrays
+    ALLDATA = {'jdb': x, 'vrad': y, 'svrad': ey}
+    
     # Compute standard periodogram
-    POW, S, PAR = periodogram_power(DATA, NU, FVALUES)
+    POW, S, PAR = periodogram_power(ALLDATA, NU, FVALUES)
 
     # If estimation of significance requested
     if NSIM > 1:
@@ -55,9 +101,9 @@ def periodogram(NU, DATA, FF0=[gamma, l, q], covariates=None, NSIM=1):
             PS[i] = [np.max(POWi), np.max(-Si)]
             #PS[i] = [POWi, Si]
 
-        return POW, S, PS
+        return POW, S, PAR, PS
 
-    return POW, S, None
+    return POW, S, PAR, None
 
 
 def periodogram_power(DATA, NU, FVALUES0):
