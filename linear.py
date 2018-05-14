@@ -81,25 +81,25 @@ def periodogram(NU, DATA, FF0=[offset, l, q], covariates=None, NSIM=1):
     if NSIM > 1:
         PS = np.empty([NSIM, 2])
 
-        NDATA = DATA.copy()
+        NDATA = ALLDATA.copy()
 
         for i in range(NSIM):
             # Shuffle data indices
-            ind = np.arange(len(DATA['vrad']))
+            ind = np.arange(len(ALLDATA['vrad']))
             np.random.shuffle(ind)
 
-            NDATA['vrad'] = DATA['vrad'][ind]
-            NDATA['svrad'] = DATA['svrad'][ind]
+            NDATA['vrad'] = ALLDATA['vrad'][ind]
+            NDATA['svrad'] = ALLDATA['svrad'][ind]
 
             # Shuffle covariates as well
             NFVALUES = list(FVALUES)
             for j in (-1 - np.arange(len(covariates))):
                 NFVALUES[j] = FVALUES[j][ind]
 
-            print(i)
+            if (i+1)%10 == 0:
+                print(i+1)
             POWi, Si = periodogram_power(NDATA, NU, NFVALUES)[:2]
             PS[i] = [np.max(POWi), np.max(-Si)]
-            #PS[i] = [POWi, Si]
 
         return POW, S, PAR, PS
 
