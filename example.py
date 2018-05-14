@@ -8,7 +8,7 @@ import numpy as np
 import pylab as plt
 
 from pyriodogram import periodogram, tools
-from pyriodogram.driftfuncs import gamma, l, q
+from pyriodogram.driftfuncs import offset, l, q
 
 homedir = os.getenv('HOME')
 
@@ -39,19 +39,19 @@ else:
 
 
 # Run only with offset for each instrument
-POW, S, PAR, RR = periodogram(NU, DATA, FF0=[gamma,], covariates=None)
+POW, S, PAR, RR = periodogram(NU, DATA, FF0=[offset,], covariates=None)
 
 fig = plt.figure()
 ax1 = fig.add_subplot(311)
 ax1.semilogx(1/NU, POW, label='GLS', color='k')
 
 # Run with offset and linear drift
-POW, S, PAR, RR = periodogram(NU, DATA, FF0=[gamma, l, q], covariates=None)
+POW, S, PAR, RR = periodogram(NU, DATA, FF0=[offset, l, q], covariates=None)
 ax2 = fig.add_subplot(312)
 ax2.semilogx(1/NU, POW, label='GLS + drift', color='C0')
 
 # Run with offset, linear drift and covariates FWHM and S
-POW, S, PAR, RR = periodogram(NU, DATA, FF0=[gamma, l, q], covariates=mycov)
+POW, S, PAR, RR = periodogram(NU, DATA, FF0=[offset, l, q], covariates=mycov)
 ax3 = fig.add_subplot(313)
 ax3.semilogx(1/NU, POW, label='GLS + drift + FWHM + S', color='C2')
 

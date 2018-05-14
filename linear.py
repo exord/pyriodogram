@@ -2,11 +2,11 @@ from math import pi
 import numpy as np
 
 from . import linear_lstsq as fit
-from .driftfuncs import gamma, l, q
+from .driftfuncs import offset, l, q
 
 __all__ = ["periodogram",]
 
-def periodogram(NU, DATA, FF0=[gamma, l, q], covariates=None, NSIM=1):
+def periodogram(NU, DATA, FF0=[offset, l, q], covariates=None, NSIM=1):
     """
     Compute a periodogram for DATA on frequencies NU.
     The model includes a quadratic polynomial by default, and can include
@@ -45,18 +45,18 @@ def periodogram(NU, DATA, FF0=[gamma, l, q], covariates=None, NSIM=1):
     y = np.concatenate([DATA[DD]['vrad'] for DD in DATA], axis=0)
     ey = np.concatenate([DATA[DD]['svrad'] for DD in DATA], axis=0)
 
-    if gamma in FF0:
+    if offset in FF0:
         # Create matrix with function values
         
         # For offset, use 0 and 1, depending on the instrument.
         FVALUES = [np.isin(x, DATA[DD]['jdb']).astype(int) for DD in DATA]
 
         # For the others, use x array
-        FVALUES.extend([f(x) for f in FF0 if f != gamma])
+        FVALUES.extend([f(x) for f in FF0 if f != offset])
 
     else:
         # IF offset is not fit
-        FVALUES = [f(x) for f in FF0 if f != gamma]
+        FVALUES = [f(x) for f in FF0 if f != offset]
 
         
     if covariates is not None:

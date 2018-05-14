@@ -13,6 +13,6 @@ def c(t):
     # Cubic drift in kms**3/year
     return (t - t.mean())**3 / 365.25**3
 
-def gamma(t):
+def offset(t):
     return t*0.0 + 1.
 
