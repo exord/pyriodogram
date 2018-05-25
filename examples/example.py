@@ -41,6 +41,11 @@ else:
 # Run only with offset for each instrument
 POW, S, PAR, RR = periodogram(NU, DATA, FF0=[offset,], covariates=None)
 
+ax1 = plt.subplot2grid((3, 5), (0, 0), colspan=2)
+ax2 = plt.subplot2grid((3, 5), (1, 0), colspan=2)
+ax3 = plt.subplot2grid((3, 5), (1, 0), colspan=2)
+
+
 fig = plt.figure()
 ax1 = fig.add_subplot(311)
 ax1.semilogx(1/NU, POW, label='GLS', color='k')
